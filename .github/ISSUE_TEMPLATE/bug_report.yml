@@ -1,0 +1,40 @@
+name: Bug report
+description: Something shows wrong data, crashes, or looks broken
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! lmon shows a lot about your machine - **remove hostnames, IP addresses, process and
+        container names** from anything you paste. Security problems go to SECURITY.md, not here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce
+      placeholder: "1. run `lmon --page net`\n2. press ...\n3. ..."
+  - type: input
+    id: version
+    attributes:
+      label: lmon version
+      description: Output of `lmon --version`
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Distro, Python version, terminal
+      placeholder: "Debian 12, Python 3.11, GNOME Terminal"
+    validations:
+      required: true
+  - type: textarea
+    id: frame
+    attributes:
+      label: Screenshot or `lmon --once` output (optional - use `lmon --demo` if the bug shows there, otherwise redact it)
+      render: text

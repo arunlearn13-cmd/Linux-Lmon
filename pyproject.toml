@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "linux-monitor"
+version = "0.1.0"
+description = "lmon: a Linux system monitor for the terminal (and web) with AI-workload, network-exposure and health insights"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Arun K", email = "arunlearn13@gmail.com" }]
+requires-python = ">=3.9"
+dependencies = ["fastapi>=0.110", "uvicorn>=0.29", "psutil>=5.9", "rich>=13"]
+keywords = ["monitor", "tui", "btop", "top", "linux", "ollama", "gpu", "nvidia", "security", "sysadmin"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console :: Curses",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: System :: Monitoring",
+]
+
+[project.urls]
+Homepage = "https://github.com/arunlearn13-cmd/Linux-Lmon"
+Issues = "https://github.com/arunlearn13-cmd/Linux-Lmon/issues"
+Changelog = "https://github.com/arunlearn13-cmd/Linux-Lmon/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+test = ["pytest>=8", "httpx>=0.27"]
+
+[project.scripts]
+lmon = "monitor.tui:main"
+
+[tool.setuptools]
+packages = ["monitor"]
+
+[tool.setuptools.package-data]
+monitor = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

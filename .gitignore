@@ -1,0 +1,34 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments (recreate with: python3 -m venv .venv && pip install -r requirements.txt)
+.venv/
+venv/
+env/
+
+# Packaging output (created by install.sh / pip install .)
+build/
+dist/
+*.egg-info/
+
+# Archives / old snapshots of the project
+*.zip
+*.tar.gz
+
+# Local configuration that may hold secrets (e.g. MONITOR_TOKEN)
+.env
+*.env
+!deploy/*.env.example
+
+# Editors and OS files
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store

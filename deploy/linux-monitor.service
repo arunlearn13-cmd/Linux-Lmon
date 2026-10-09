@@ -1,0 +1,18 @@
+[Unit]
+Description=Linux Monitor dashboard
+After=network.target
+
+[Service]
+User=monitor
+SupplementaryGroups=systemd-journal
+WorkingDirectory=/opt/linux-monitor
+EnvironmentFile=-/etc/linux-monitor.env
+ExecStart=/opt/linux-monitor/.venv/bin/python -m monitor
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

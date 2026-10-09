@@ -1,0 +1,23 @@
+name: Feature request
+description: An idea for lmon - a new panel, insight rule, data source or theme
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: What are you trying to see or understand that lmon does not show today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What should lmon show, and where does the data come from (file, command, API)? lmon only shows measured data.
+    validations:
+      required: true
+  - type: dropdown
+    id: help
+    attributes:
+      label: Would you like to work on it?
+      options: ["Yes, I can open a PR", "Maybe, with some guidance", "No"]

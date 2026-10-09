@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#02060a">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Linux System Monitor</title>
+<style>
+:root{color-scheme:dark;--bg:#02060a;--card:rgba(3,14,11,.88);--line:#0d4a31;--txt:#b6ffd1;--mut:#4f9a72;--ok:#00ff9c;--warn:#ffc400;--bad:#ff2e88;--acc:#00e5ff;--track:#04160f}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+html{font-size:clamp(12px,1.38vh,18px)}
+body{background:radial-gradient(ellipse at 50% 0,#06201a 0,var(--bg) 70%);color:var(--txt);
+  font:1rem/1.35 "JetBrains Mono","Fira Code","Cascadia Code",ui-monospace,Menlo,Consolas,monospace;
+  display:flex;flex-direction:column;gap:.55rem;
+  padding:max(.55rem,env(safe-area-inset-top)) max(.55rem,env(safe-area-inset-right)) max(.55rem,env(safe-area-inset-bottom)) max(.55rem,env(safe-area-inset-left))}
+#rain{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.22;pointer-events:none}
+body::after{content:"";position:fixed;inset:0;z-index:3;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.6) 100%)}
+header,main{position:relative;z-index:1}
+header{border:1px solid var(--ok);background:var(--card);padding:.3rem .8rem;display:flex;flex-wrap:wrap;align-items:center;gap:.25rem 1.1rem;
+  box-shadow:0 0 16px rgba(0,255,156,.22),inset 0 0 18px rgba(0,255,156,.06);color:var(--mut)}
+.sp0{flex:1}
+h1{margin:0;font-size:1.3rem;letter-spacing:.16em}
+h1.glitch{position:relative;color:var(--ok);text-shadow:0 0 12px var(--ok)}
+h1.glitch::before,h1.glitch::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;overflow:hidden}
+h1.glitch::before{color:var(--acc);clip-path:inset(0 0 55% 0);animation:g1 4s infinite steps(1)}
+h1.glitch::after{color:var(--bad);clip-path:inset(55% 0 0 0);animation:g2 5s infinite steps(1)}
+@keyframes g1{0%,91%,100%{transform:none}92%{transform:translate(-3px,1px)}96%{transform:translate(2px,0)}}
+@keyframes g2{0%,86%,100%{transform:none}87%{transform:translate(3px,-1px)}93%{transform:translate(-2px,0)}}
+.prompt{color:var(--ok)}.prompt b{color:var(--acc)}
+.cursor{animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+#live{font-weight:700;color:var(--ok);text-shadow:0 0 8px var(--ok);animation:pulse 2s ease-in-out infinite}
+#live.off{color:var(--bad);text-shadow:0 0 8px var(--bad);animation:blink .8s steps(1) infinite}
+@keyframes pulse{50%{opacity:.55}}
+nav{display:flex;gap:.4rem}
+nav a{padding:.05rem .7rem;border:1px solid var(--line);color:var(--mut);text-decoration:none;letter-spacing:.08em}
+nav a:hover{color:var(--acc);border-color:var(--acc)}
+nav a.on{color:#001a10;background:var(--ok);border-color:var(--ok);box-shadow:0 0 12px var(--ok);font-weight:700}
+main{flex:1;min-height:0;overflow:auto;padding:2px;display:grid}
+.g{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:.55rem;align-content:start;min-height:0}
+.g.fill{height:100%;align-content:stretch}
+.g.basic{grid-template-rows:auto minmax(0,1fr) auto}
+.g.advp{grid-template-rows:auto minmax(0,1.25fr) minmax(0,1fr)}
+.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}.s6{grid-column:span 6}.s7{grid-column:span 7}.s12{grid-column:1/-1}
+@media (max-width:1100px),(max-height:620px){
+  .s2,.s3,.s4,.s6,.s7{grid-column:span 6}
+  .g.fill{height:auto;align-content:start}.g.basic,.g.advp{grid-template-rows:none}
+  .cpuw{grid-template-columns:1fr!important}.ccg{grid-auto-rows:minmax(4rem,auto)!important}}
+@media (max-width:640px){.g>*{grid-column:1/-1}}
+.card{position:relative;background:var(--card);border:1px solid var(--line);padding:.45rem .65rem;min-width:0;min-height:0;display:flex;flex-direction:column;
+  box-shadow:0 0 12px rgba(0,255,156,.07),inset 0 0 20px rgba(0,255,156,.04)}
+.card::before,.card::after{content:"";position:absolute;width:.65rem;height:.65rem;border:2px solid var(--acc);filter:drop-shadow(0 0 4px var(--acc))}
+.card::before{top:-2px;left:-2px;border-right:0;border-bottom:0}
+.card::after{bottom:-2px;right:-2px;border-left:0;border-top:0}
+.card h2{margin:0 0 .3rem;font-size:.78rem;font-weight:600;letter-spacing:.14em;color:var(--acc);text-transform:uppercase;text-shadow:0 0 8px rgba(0,229,255,.6)}
+.card h2::before{content:"▌";color:var(--ok);margin-right:.3rem}
+.fb{flex:1;min-height:0}
+.kv{display:flex;justify-content:space-between;gap:.5rem;border-bottom:1px dotted rgba(79,154,114,.22)}
+.kv span{color:var(--mut)}.kv b{font-weight:500;text-align:right}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 .9rem}
+.split{display:grid;grid-template-columns:auto 1fr;gap:.8rem;align-items:center}
+.bar{height:.5rem;border:1px solid var(--line);background:var(--track);margin:.2rem 0 .35rem;padding:1px}
+.bar i{display:block;height:100%;--c:var(--mut);background:repeating-linear-gradient(90deg,var(--c) 0 4px,transparent 4px 6px);filter:drop-shadow(0 0 3px var(--c))}
+i.ok{--c:var(--ok)}i.warn{--c:var(--warn)}i.bad{--c:var(--bad)}
+.big{font-size:1.9rem;font-weight:700;line-height:1.05;color:var(--ok);text-shadow:0 0 12px currentColor}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.cpuw{display:grid;grid-template-columns:minmax(15rem,25%) minmax(0,1fr);gap:.7rem;height:100%;min-height:0}
+.cl{display:flex;flex-direction:column;gap:.2rem;min-height:0}
+.chart{flex:1;min-height:4rem;display:flex;border:1px solid var(--line);background:rgba(0,0,0,.3)}
+.chart.ok{color:var(--ok)}.chart.warn{color:var(--warn)}.chart.bad{color:var(--bad)}
+.br{display:grid;grid-template-columns:4.6rem 1fr 3.6rem;gap:.4rem;align-items:center}
+.br span{color:var(--mut)}.br b{text-align:right;font-weight:500}
+.mb{height:.35rem;background:var(--track)}
+.mb i{display:block;height:100%;background:var(--c,var(--mut));box-shadow:0 0 4px var(--c,transparent)}
+.ccg{display:grid;gap:.35rem;grid-template-columns:repeat(auto-fill,minmax(12.5rem,1fr));grid-auto-rows:minmax(3.4rem,1fr);min-height:0}
+.cc{display:flex;flex-direction:column;border:1px solid var(--line);background:rgba(0,0,0,.35);padding:.15rem .35rem .25rem;min-height:0;min-width:0}
+.cc.ok{color:var(--ok)}.cc.warn{color:var(--warn)}.cc.bad{color:var(--bad)}
+.ch{display:flex;gap:.45rem;align-items:baseline;font-size:.82rem}
+.ch span{color:var(--mut)}.ch .t{margin-left:auto}.ch .pc{min-width:2.8rem;text-align:right}
+.sp{display:block;width:100%;flex:1 1 0;min-height:0;height:100%}
+.sp .a{fill:currentColor;opacity:.22}
+.sp .l{fill:none;stroke:currentColor;stroke-width:1.5;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 2px currentColor)}
+.sp .gl{fill:none;stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke;opacity:.8}
+.stats{display:grid;gap:.5rem;grid-template-columns:repeat(auto-fit,minmax(8rem,1fr))}
+.stat{text-align:center}.stat .big{display:block;font-size:1.5rem}
+.meta{color:var(--mut);font-size:.75rem;letter-spacing:.1em}
+.ev{flex:1;min-height:0;overflow:hidden}
+.ev div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev div::before{content:"› "}
+.ev time{color:var(--mut);margin-right:.4rem}.ev em{color:var(--acc);font-style:normal;margin-left:.4rem}
+.note{color:var(--mut);font-size:.85rem}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="rain" aria-hidden="true"></canvas>
+<header>
+  <h1 class="glitch" data-text="SYSMON//LINUX">SYSMON//LINUX</h1>
+  <span id="live" class="off">● CONNECTING</span>
+  <span class="prompt">root@<b id="host">…</b>:~$<span class="cursor">█</span></span>
+  <span id="clock"></span><span id="up"></span><span id="kern"></span>
+  <span class="sp0"></span>
+  <nav><a href="#basic" id="t-basic">[ BASIC ]</a><a href="#advanced" id="t-advanced">[ ADVANCED ]</a></nav>
+</header>
+<main id="view"></main>
+
+<script>
+const TOKEN = new URLSearchParams(location.search).get('token');
+const $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 100) => Math.min(b, Math.max(a, v));
+// All server-provided strings go through esc() before touching innerHTML.
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n = (v, d = 0) => v == null || Number.isNaN(v) ? '—' : v.toLocaleString('en-US', {minimumFractionDigits: d, maximumFractionDigits: d});
+const k = v => v == null ? '—' : v >= 1000 ? n(v / 1000, 1) + 'K' : n(v);
+const lvl = p => p == null ? '' : p >= 85 ? 'bad' : p >= 65 ? 'warn' : 'ok';
+const tc = t => t == null ? '' : t >= 80 ? 'bad' : t >= 70 ? 'warn' : '';
+const bar = p => `<div class="bar"><i class="${lvl(p)}" style="width:${clamp(p || 0).toFixed(0)}%"></i></div>`;
+const kv = (a, b, c = '') => `<div class="kv"><span>${a}</span><b class="${c}">${b}</b></div>`;
+const card = (t, b, sp = '') => `<section class="card ${sp}"><h2>${t}</h2>${b}</section>`;
+const flag = (v, warnAt) => v != null && v >= warnAt ? ' ⚠' : '';
+const cls = (v, warnAt, c = 'warn') => v != null && v >= warnAt ? c : '';
+
+function spark(vals, cap, w, h, grid) {
+  if (!vals || !vals.length) return '';
+  const st = w / (cap - 1), x0 = w - (vals.length - 1) * st;  // newest sample on the right, like btop
+  const pts = vals.map((v, i) => `${(x0 + i * st).toFixed(1)},${(h - clamp(v) / 100 * h).toFixed(1)}`);
+  const gl = grid ? [25, 50, 75].map(p => `M0,${(h - p / 100 * h).toFixed(1)} H${w}`).join(' ') : '';
+  return `<svg class="sp" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${gl ? `<path class="gl" d="${gl}"/>` : ''}<path class="a" d="M${x0.toFixed(1)},${h} L${pts.join(' L')} L${w},${h}Z"/><path class="l" d="M${pts.join(' L')}"/></svg>`;
+}
+const brk = (l, v) => `<div class="br"><span>${l}</span><div class="mb"><i class="${lvl(v)}" style="width:${clamp(v || 0).toFixed(0)}%"></i></div><b>${v == null ? '—' : n(v, 1) + '%'}</b></div>`;
+
+function cpuBox(D) {
+  const c = D.cpu, hot = Math.max(...c.per_core), ghz = c.freq_mhz.filter(x => x != null);
+  const avg = ghz.length ? ghz.reduce((a, b) => a + b, 0) / ghz.length : null;
+  const left = `<div class="cl">
+    <div class="note">${esc(D.cpu_model || '')}</div>
+    <div class="split"><span class="big ${lvl(c.pct)}">${n(c.pct)}%</span><div class="note">${c.per_core.length} threads · ${avg == null ? '—' : n(avg / 1000, 2) + ' GHz avg'}${c.freq_max_mhz ? ' / ' + n(c.freq_max_mhz / 1000, 1) + ' max' : ''}</div></div>
+    <div class="chart ${lvl(c.pct)}">${spark(c.hist.slice(-120), 120, 120, 40, true)}</div>
+    ${brk('USER', c.user)}${brk('SYSTEM', c.system)}${brk('IOWAIT', c.iowait)}${brk('IRQ', c.irq)}
+    ${kv('Load 1/5/15', c.load.map(x => n(x, 2)).join(' '))}${kv('Package temp', c.temp == null ? '—' : n(c.temp) + '°C', tc(c.temp))}${kv('Power', c.power_w == null ? '—' : n(c.power_w) + ' W')}${kv('Busiest thread', n(hot) + '%', lvl(hot))}</div>`;
+  const cells = c.per_core.map((v, i) => {
+    const f = c.freq_mhz[i], t = c.core_temps[i], m = c.times && c.times[i];
+    return `<div class="cc ${lvl(v)}" title="CPU ${i}${m ? ` · usr ${n(m.u, 1)}% sys ${n(m.s, 1)}% iow ${n(m.w, 1)}%` : ''}">
+      <div class="ch"><b>C${i}</b><span>${f == null ? '' : n(f / 1000, 1) + 'G'}</span><span class="t ${tc(t)}">${t == null ? '' : n(t) + '°'}</span><b class="pc">${n(v)}%</b></div>
+      ${spark(c.core_hist && c.core_hist[i], 60, 100, 24)}</div>`;
+  }).join('');
+  return `<div class="cpuw">${left}<div class="ccg">${cells}</div></div>`;
+}
+
+function basic(D) {
+  const { cpu, mem, gpu, net, disk, temps, ollama } = D;
+  const deg = v => v == null ? '—' : n(v) + '°C';
+  let h = '<div class="g fill basic">';
+  h += card('MEMORY', mem ? `<div class="split"><span class="big ${lvl(mem.pct)}">${n(mem.pct)}%</span><div>${kv('Used', `${n(mem.used_gb, 1)} / ${n(mem.total_gb)} GB`)}${kv('Available', n(mem.avail_gb, 1) + ' GB')}${kv('Swap used', n(mem.swap_used_gb, 1) + ' GB')}</div></div>${bar(mem.pct)}` : '—', 's4');
+  h += card('GPU' + (gpu ? ' · ' + esc(gpu.name) : ''), gpu ? `<div class="split"><span class="big ${lvl(gpu.util)}">${n(gpu.util)}%</span><div>${kv('VRAM', `${n(gpu.vram_used_gb, 1)} / ${n(gpu.vram_total_gb)} GB`)}${kv('Temp', deg(gpu.temp), tc(gpu.temp))}${kv('Power', gpu.power_w == null ? '—' : n(gpu.power_w) + ' W')}</div></div>${bar(gpu.util)}` : '<span class="note">No NVIDIA GPU (nvidia-smi not found)</span>', 's4');
+  const up = ollama && ollama.running;
+  h += card('OLLAMA · ' + (up ? '<span class="ok">● RUNNING</span>' : '<span class="bad">● STOPPED</span>'),
+    `<div class="note">${esc(ollama && ollama.url)}</div>` + (up ? (ollama.models.length ? ollama.models.map(m => kv(esc(m.name), n(m.size_gb, 1) + ' GB') + `<div class="note">VRAM ${n(m.vram_gb, 1)} GB · ctx ${m.context ? k(m.context) : '—'}</div>`).join('') : '<div class="note">No model loaded</div>') : '<div class="note">Not reachable</div>'), 's4');
+  h += card('CPU' + (cpu ? ` · ${cpu.per_core.length} THREADS` : ''), cpu ? `<div class="fb">${cpuBox(D)}</div>` : '—', 's12');
+  h += card('NETWORK', net ? (net.ifaces.length ? net.ifaces.map(i => kv(`${i.kind === 'wifi' ? 'WIFI' : 'ETH'} ${esc(i.name)}`, i.up ? `↓ ${n(i.rx_mbps)} ↑ ${n(i.tx_mbps)} Mbps` : '<span class="note">link down</span>')).join('') + kv('Pkts RX/TX', `${k(net.rx_pps)} / ${k(net.tx_pps)} /s`) : '<span class="note">No Ethernet/WiFi adapter found</span>') : '—', 's3');
+  h += card('STORAGE' + (disk && disk.name ? ' · ' + esc(disk.name) : ''), disk ? `<div class="two">${kv('Read', n(disk.read_mbs) + ' MB/s')}${kv('Write', n(disk.write_mbs) + ' MB/s')}${kv('IOPS', k(disk.iops))}${kv('Temp', deg(disk.temp), tc(disk.temp))}</div>
+    ${disk.mounts.map(m => kv(esc(m.path), `${n(m.used_gb)} / ${n(m.total_gb)} GB · ${n(m.pct)}%`) + bar(m.pct)).join('')}` : '—', 's7');
+  const t = [['CPU', temps.cpu], ['GPU', temps.gpu], ['NVMe', temps.nvme], ['Board', temps.board], ['SSD', temps.ssd]].filter(x => x[1] != null);
+  h += card('TEMPS', t.length ? t.map(([a, v]) => kv(a, deg(v), tc(v))).join('') : '<span class="note">No sensors</span>', 's2');
+  return h + '</div>';
+}
+
+function adv(D) {
+  const a = D.adv, tcp = a.tcp || {}, ker = a.kernel || {}, pr = a.proc || {}, sd = a.systemd || {}, ps = a.pressure || {};
+  const st = (l, v, c = '') => `<div class="stat"><span class="big ${c}">${v}</span><span class="meta">${l}</span></div>`;
+  const pb = (l, v) => kv(l, v == null ? '—' : n(v) + '%' + flag(v, 85), lvl(v)) + bar(v);
+  const rows = arr => arr.map(([l, v, c]) => kv(l, v == null ? '—' : v, c || '')).join('');
+  let h = '<div class="g fill advp">';
+  h += card('OVERVIEW', `<div class="stats">${st('EVENTS /min', n(a.events_per_min), cls(a.events_per_min, 20))}${st('CTX SWITCH /s', k(a.ctx_per_s))}${st('NET PKTS /s', k(a.net_pps))}${st('STORAGE LATENCY', a.io_latency_ms == null ? '—' : n(a.io_latency_ms, 1) + 'ms', cls(a.io_latency_ms, 10))}</div>`, 's12');
+  h += card('RECENT WARNINGS (newest first)', `<div class="ev">${a.events.length ? a.events.map(e => `<div class="${e.level}"><time>${esc(e.t)}</time>${esc(e.src)}: ${esc(e.msg)}${e.count > 1 ? `<em>×${e.count}</em>` : ''}</div>`).join('') : '<span class="note">No recent warnings or journal not readable</span>'}</div>`, 's6');
+  h += card('RESOURCE PRESSURE', pb('FD', ps.fd) + pb('PID/threads', ps.pid) + pb('inotify', ps.inotify), 's3');
+  h += card('TCP HEALTH', rows([['ESTABLISHED', k(tcp.est)], ['TIME_WAIT', tcp.tw == null ? null : k(tcp.tw), cls(tcp.tw, 10000)], ['CLOSE_WAIT', tcp.cw == null ? null : n(tcp.cw) + flag(tcp.cw, 300), cls(tcp.cw, 300)], ['RETRANSMIT', tcp.retrans_per_s == null ? null : n(tcp.retrans_per_s, 1) + '/s']]), 's3');
+  h += card('KERNEL HEALTH (1h)', rows([['Warnings', ker.warnings == null ? null : n(ker.warnings), cls(ker.warnings, 1)], ['OOM', ker.oom == null ? null : n(ker.oom), cls(ker.oom, 1, 'bad')], ['RCU stalls', ker.rcu_stalls == null ? null : n(ker.rcu_stalls), cls(ker.rcu_stalls, 1, 'bad')], ['MCE', ker.mce == null ? null : n(ker.mce), cls(ker.mce, 1, 'bad')]]), 's4');
+  h += card('PROCESS BEHAVIOR', rows([['Forks', pr.forks_per_s == null ? null : n(pr.forks_per_s) + '/s'], ['D-State', pr.dstate == null ? null : n(pr.dstate) + flag(pr.dstate, 3), cls(pr.dstate, 3)], ['Zombies', pr.zombies == null ? null : n(pr.zombies) + flag(pr.zombies, 1), cls(pr.zombies, 1)]]), 's4');
+  h += card('SYSTEMD', rows([['Restarts', sd.restarts_per_min == null ? null : n(sd.restarts_per_min) + '/min', cls(sd.restarts_per_min, 1)], ['Failed units', sd.failed == null ? null : n(sd.failed) + flag(sd.failed, 1), cls(sd.failed, 1, 'bad')], ['Stuck jobs', sd.stuck == null ? null : n(sd.stuck), cls(sd.stuck, 1)]]) + (sd.failed_names || []).map(x => `<div class="note bad">✖ ${esc(x)}</div>`).join(''), 's4');
+  return h + '</div>';
+}
+
+let D = null, online = false;
+function render() {
+  const page = location.hash === '#advanced' ? 'advanced' : 'basic';
+  ['basic', 'advanced'].forEach(p => $('t-' + p).classList.toggle('on', p === page));
+  const live = $('live');
+  live.textContent = online ? '● LIVE' : '● DISCONNECTED';
+  live.className = online ? '' : 'off';
+  if (!D || !D.cpu && !D.mem) { $('view').innerHTML = '<span class="note">Waiting for data…</span>'; return; }
+  $('clock').textContent = new Date(D.ts * 1000).toLocaleTimeString('en-GB');
+  $('host').textContent = D.host;
+  $('kern').textContent = 'kernel: ' + D.kernel;
+  const s = D.uptime_s;
+  $('up').textContent = `uptime: ${Math.floor(s / 86400)}d ${Math.floor(s % 86400 / 3600)}h`;
+  let h = page === 'basic' ? basic(D) : adv(D);
+  const errs = Object.entries(D.errors || {});
+  if (errs.length) h += card('COLLECTOR ISSUES', errs.map(([a, b]) => `<div class="note">${esc(a)}: ${esc(b)}</div>`).join(''));
+  $('view').innerHTML = h;
+}
+
+async function poll() {
+  try {
+    const r = await fetch('api/metrics', { headers: TOKEN ? { Authorization: 'Bearer ' + TOKEN } : {}, cache: 'no-store', signal: AbortSignal.timeout(3000) });
+    if (!r.ok) throw new Error(r.status);
+    D = await r.json();
+    online = true;
+  } catch { online = false; D = null; }  // never show stale values as current
+  render();
+  setTimeout(poll, 1000);
+}
+addEventListener('hashchange', render);
+poll();
+</script>
+<script>
+// Decorative matrix rain. Purely visual: it never displays or implies any metric.
+(() => {
+  const c = document.getElementById('rain'), x = c.getContext('2d');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { c.remove(); return; }
+  const chars = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ0123456789ABCDEF<>/\\|=+*';
+  const size = 15; let cols, drops;
+  const fit = () => { c.width = innerWidth; c.height = innerHeight; cols = Math.ceil(c.width / size);
+    drops = Array.from({length: cols}, () => Math.random() * -50); };
+  fit(); addEventListener('resize', fit);
+  let last = 0;
+  (function frame(t) {
+    requestAnimationFrame(frame);
+    if (document.hidden || t - last < 50) return;
+    last = t;
+    x.fillStyle = 'rgba(2,6,10,.14)'; x.fillRect(0, 0, c.width, c.height);
+    x.font = size + 'px monospace';
+    x.fillStyle = (typeof online !== 'undefined' && !online) ? '#ff2e88' : '#00ff9c';
+    for (let i = 0; i < cols; i++) {
+      x.fillText(chars[Math.floor(Math.random() * chars.length)], i * size, drops[i] * size);
+      if (drops[i] * size > c.height && Math.random() > .975) drops[i] = 0;
+      drops[i]++;
+    }
+  })(0);
+})();
+</script>
+</body>
+</html>
